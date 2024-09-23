@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Webhook Events</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .event {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .event:last-child {
+            border-bottom: none;
+        }
+        .event h3 {
+            margin: 0;
+            color: #007bff;
+        }
+        .event p {
+            margin: 5px 0;
+        }
+        .timestamp {
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Recent GitHub Webhook Events</h1>
+        <div id="events-list">
+            {% for event in events %}
+                <div class="event">
+                    <h3>{{ event.action }}</h3>
+                    {% if event.event == 'Push' %}
+                       <p>"${event.author}" pushed to "${event.to_branch}" on ${event.timestamp}</p>
+                    {% elif event.event == 'Pull Request' %}
+                       <p>"${event.author}" submitted a pull request from  "${event.from_branch}" to "${event.to_branch}" on ${event.timestamp}</p>
+                    {% elif event.event == 'Merge' %}
+                       <p>"${event.author}" merged branch "${event.from_branch}" to "${event.to_branch}" on ${event.timestamp}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function fetchEvents() {
+            $.getJSON('/events', function(data) {
+                $('#events-list').empty();  // Clear the current list
+                data.forEach(function(event) {
+                    let eventHtml = `
+                        <div class="event">
+                            <h3>${event.action}</h3>`;
+                    
+                    if (event.action === 'Push') {
+                        eventHtml += `<p>"${event.author}" pushed to "${event.to_branch}" on ${event.timestamp}</p></div>`;
+                    } else if (event.action === 'Pull Request') {
+                        eventHtml += `<p>"${event.author}" submitted a pull request from  "${event.from_branch}" to "${event.to_branch}" on ${event.timestamp}</p></div>`;
+                    } else if (event.action === 'Merge') {
+                        eventHtml += `<p>"${event.author}" merged branch "${event.from_branch}" to "${event.to_branch}" on ${event.timestamp}</p></div>`;
+                    }
+                    
+                    // eventHtml += `<p class="timestamp">${event.timestamp}</p></div>`;
+                    $('#events-list').append(eventHtml);
+                });
+            });
+        }
+
+        // Fetch events every 10 seconds
+        fetchEvents()
+        setInterval(fetchEvents, 10000);
+    </script>
+
+</body>
+</html>
